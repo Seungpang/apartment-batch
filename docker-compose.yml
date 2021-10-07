@@ -1,0 +1,17 @@
+version: '3'
+
+services:
+  mysql:
+    container_name: mysql_apartment_batch
+    image: mysql/mysql-server:5.7
+    environment:
+      MYSQL_ROOT_HOST: '%'
+      MYSQL_USER: "apartment"
+      MYSQL_PASSWORD: "apartment"
+      MYSQL_DATABASE: "apartment_batch"
+    ports:
+      - "3306:3306"
+    command:
+      - "mysqld"
+      - "--character-set-server=utf8mb4"
+      - "--collation-server=utf8mb4_unicode_ci"
