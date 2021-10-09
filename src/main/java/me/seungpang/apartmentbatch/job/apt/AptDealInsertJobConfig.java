@@ -1,17 +1,22 @@
 package me.seungpang.apartmentbatch.job.apt;
 
 import java.time.YearMonth;
+import java.util.Arrays;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.seungpang.apartmentbatch.adapter.ApartmentApiResource;
 import me.seungpang.apartmentbatch.core.dto.AptDealDto;
 import me.seungpang.apartmentbatch.job.validator.FilePathParameterVaildator;
+import me.seungpang.apartmentbatch.job.validator.LawdCdParameterValidator;
+import me.seungpang.apartmentbatch.job.validator.YearMonthParameterValidator;
 import org.springframework.batch.core.Job;
+import org.springframework.batch.core.JobParametersValidator;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepScope;
+import org.springframework.batch.core.job.CompositeJobParametersValidator;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.xml.StaxEventItemReader;
@@ -36,9 +41,18 @@ public class AptDealInsertJobConfig {
     public Job aptDealInsertJob(Step aptDealInsertStep) {
         return jobBuilderFactory.get("aptDealInsertJob")
             .incrementer(new RunIdIncrementer())
-            .validator(new FilePathParameterVaildator())
+            .validator(aptDealJobParameterValidator())
             .start(aptDealInsertStep)
             .build();
+    }
+
+    private JobParametersValidator aptDealJobParameterValidator() {
+        CompositeJobParametersValidator validator = new CompositeJobParametersValidator();
+        validator.setValidators(Arrays.asList(
+            new YearMonthParameterValidator(),
+            new LawdCdParameterValidator()
+        ));
+        return validator;
     }
 
     @JobScope
