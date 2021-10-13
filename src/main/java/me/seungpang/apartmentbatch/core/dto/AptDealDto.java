@@ -1,5 +1,8 @@
 package me.seungpang.apartmentbatch.core.dto;
 
+import io.micrometer.core.instrument.util.StringUtils;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import lombok.Getter;
@@ -12,6 +15,11 @@ public class AptDealDto {
 
     @XmlElement(name ="거래금액")
     private String dealAmount;
+
+    public Long getDealAmount() {
+        String amount = dealAmount.replaceAll(",", "").trim();
+        return Long.parseLong(amount);
+    }
 
     @XmlElement(name = "건축년도")
     private Integer builtYear;
@@ -44,8 +52,23 @@ public class AptDealDto {
     private Integer floor;
 
     @XmlElement(name = "해제사유발생일")
-    private String dealCanceledDate;
+    private String dealCanceledDate; // 21.10.13
+
+    public LocalDate getDealCanceledDate() {
+        if (StringUtils.isBlank(dealCanceledDate)) {
+            return null;
+        }
+        return LocalDate.parse(dealCanceledDate.trim(), DateTimeFormatter.ofPattern("yy.MM.dd"));
+    }
 
     @XmlElement(name = "해제여부")
-    private String dealCanceled;
+    private String dealCanceled;    // O
+
+    public boolean isDealCanceled() {
+        return "O".equals(dealCanceled.trim());
+    }
+
+    public LocalDate getDealDate() {
+        return LocalDate.of(year, month, day);
+    }
 }
