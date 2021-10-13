@@ -1,21 +1,19 @@
 package me.seungpang.apartmentbatch.job.apt;
 
 import java.time.YearMonth;
-import java.util.Arrays;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.seungpang.apartmentbatch.adapter.ApartmentApiResource;
 import me.seungpang.apartmentbatch.core.dto.AptDealDto;
 import me.seungpang.apartmentbatch.core.repository.LawdRepository;
+import me.seungpang.apartmentbatch.core.service.AptDealService;
 import me.seungpang.apartmentbatch.job.validator.YearMonthParameterValidator;
 import org.springframework.batch.core.Job;
-import org.springframework.batch.core.JobParametersValidator;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepScope;
-import org.springframework.batch.core.job.CompositeJobParametersValidator;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.item.ItemWriter;
@@ -40,14 +38,13 @@ public class AptDealInsertJobConfig {
     @Bean
     public Job aptDealInsertJob(
         Step guLawdCdStep,
-        Step contextPrintStep
-//        Step aptDealInsertStep
+        Step aptDealInsertStep
     ) {
         return jobBuilderFactory.get("aptDealInsertJob")
             .incrementer(new RunIdIncrementer())
             .validator(new YearMonthParameterValidator())
             .start(guLawdCdStep)
-            .on("CONTINUABLE").to(contextPrintStep).next(guLawdCdStep)
+            .on("CONTINUABLE").to(aptDealInsertStep).next(guLawdCdStep)
             .from(guLawdCdStep)
             .on("*").end()
             .end()
@@ -143,9 +140,9 @@ public class AptDealInsertJobConfig {
 
     @StepScope
     @Bean
-    public ItemWriter<AptDealDto> aptDealWriter() {
+    public ItemWriter<AptDealDto> aptDealWriter(AptDealService aptDealService) {
         return items -> {
-            items.forEach(System.out::println);
+            items.forEach(aptDealService::upsert);
             System.out.println("================ writing Completed ==============");
         };
     }
