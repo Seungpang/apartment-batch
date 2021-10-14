@@ -19,7 +19,6 @@ import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.xml.StaxEventItemReader;
 import org.springframework.batch.item.xml.builder.StaxEventItemReaderBuilder;
-import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -51,13 +50,6 @@ public class AptDealInsertJobConfig {
             .build();
     }
 
-//    private JobParametersValidator aptDealJobParameterValidator() {
-//        CompositeJobParametersValidator validator = new CompositeJobParametersValidator();
-//        validator.setValidators(Arrays.asList(
-//            new YearMonthParameterValidator()
-//        ));
-//        return validator;
-//    }
 
     @JobScope
     @Bean
@@ -80,25 +72,6 @@ public class AptDealInsertJobConfig {
         return new GuLawdTasklet(lawdRepository);
     }
 
-    @JobScope
-    @Bean
-    public Step contextPrintStep(Tasklet contextPrintTasklet) {
-        return stepBuilderFactory.get("contextPrintStep")
-            .tasklet(contextPrintTasklet)
-            .build();
-    }
-
-    @StepScope
-    @Bean
-    public Tasklet contextPrintTasklet(
-        @Value("#{jobExecutionContext['guLawdCd']}") String guLawdCd
-    ) {
-        return ((contribution, chunkContext) -> {
-            System.out.println("[contextPrintTasklet] guLawdCd = " + guLawdCd);
-            return RepeatStatus.FINISHED;
-        });
-    }
-
 
     @JobScope
     @Bean
@@ -113,17 +86,16 @@ public class AptDealInsertJobConfig {
             .build();
     }
 
+
     @StepScope
     @Bean
     public StaxEventItemReader<AptDealDto> aptDealResourcesReader (
-        //@Value("#{jobParameters['filePath']}") String filePath,
         @Value("#{jobParameters['yearMonth']}") String yearMonth,
         @Value("#{jobExecutionContext['guLawdCd']}") String guLawdCd,
         Jaxb2Marshaller aptDealDtoMarshaller
     ) {
         return new StaxEventItemReaderBuilder<AptDealDto>()
             .name("aptDealResourcesReader")
-            //.resource(new ClassPathResource(filePath))
             .resource(apartmentApiResource.getResource(guLawdCd, YearMonth.parse(yearMonth)))
             .addFragmentRootElements("item")
             .unmarshaller(aptDealDtoMarshaller)
