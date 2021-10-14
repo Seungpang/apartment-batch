@@ -57,7 +57,7 @@ public class AptDeal {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-    public static AptDeal from(AptDealDto dto, Apt apt) {
+    public static AptDeal of(AptDealDto dto, Apt apt) {
         AptDeal deal = new AptDeal();
         deal.setApt(apt);
         deal.setExclusiveArea(dto.getExclusiveArea());
