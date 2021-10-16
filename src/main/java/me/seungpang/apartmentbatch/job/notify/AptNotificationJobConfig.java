@@ -1,11 +1,11 @@
 package me.seungpang.apartmentbatch.job.notify;
 
 import java.time.LocalDate;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import me.seungpang.apartmentbatch.adapter.FakeSendService;
 import me.seungpang.apartmentbatch.core.dto.AptDto;
 import me.seungpang.apartmentbatch.core.dto.NotificationDto;
 import me.seungpang.apartmentbatch.core.entity.AptNotification;
@@ -27,7 +27,6 @@ import org.springframework.batch.item.data.builder.RepositoryItemReaderBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
 
 @Configuration
@@ -105,7 +104,7 @@ public class AptNotificationJobConfig {
 
     @StepScope
     @Bean
-    public ItemWriter<NotificationDto> aptNotificationWriter() {
-        return items -> items.forEach(item -> System.out.println(item.toMessage()));
+    public ItemWriter<NotificationDto> aptNotificationWriter(FakeSendService fakeSendService) {
+        return items -> items.forEach(item -> fakeSendService.send(item.getEmail(), item.toMessage()));
     }
 }
