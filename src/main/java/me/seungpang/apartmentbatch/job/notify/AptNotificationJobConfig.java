@@ -1,13 +1,17 @@
 package me.seungpang.apartmentbatch.job.notify;
 
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import me.seungpang.apartmentbatch.core.dto.AptDto;
 import me.seungpang.apartmentbatch.core.dto.NotificationDto;
 import me.seungpang.apartmentbatch.core.entity.AptNotification;
 import me.seungpang.apartmentbatch.core.repository.AptNotificationRepository;
+import me.seungpang.apartmentbatch.core.repository.LawdRepository;
+import me.seungpang.apartmentbatch.core.service.AptDealService;
 import me.seungpang.apartmentbatch.job.validator.DealDateParameterValidator;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
@@ -20,6 +24,7 @@ import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.data.RepositoryItemReader;
 import org.springframework.batch.item.data.builder.RepositoryItemReaderBuilder;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.Sort;
@@ -72,20 +77,35 @@ public class AptNotificationJobConfig {
 
     @StepScope
     @Bean
-    public ItemProcessor<AptNotification, NotificationDto> aptNotificationProcessor() {
-        return new ItemProcessor<AptNotification, NotificationDto>() {
-            @Override
-            public NotificationDto process(AptNotification item) throws Exception {
+    public ItemProcessor<AptNotification, NotificationDto> aptNotificationProcessor(
+        @Value("#{jobParameters['dealDate']}") String dealDate,
+        AptDealService aptDealService,
+        LawdRepository lawdRepository
+    ) {
+        return aptNotification -> {
+            List<AptDto> aptDtoList = aptDealService.findyByGuLawdCdAndDealDate(
+                aptNotification.getGuLawdCd(),
+                LocalDate.parse(dealDate));
+
+            if (aptDtoList.isEmpty()) {
                 return null;
             }
+
+            String guName = lawdRepository.findByLawdCd(aptNotification.getGuLawdCd() + "00000")
+                .orElseThrow().getLawdDong();
+
+            return NotificationDto.builder()
+                .email(aptNotification.getEmail())
+                .guName(guName)
+                .count(aptDtoList.size())
+                .aptDeals(aptDtoList)
+                .build();
         };
     }
 
     @StepScope
     @Bean
     public ItemWriter<NotificationDto> aptNotificationWriter() {
-        return items -> {
-
-        };
+        return items -> items.forEach(item -> System.out.println(item.toMessage()));
     }
 }
